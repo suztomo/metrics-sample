@@ -1,5 +1,5 @@
 
-package com.example.metricssample;
+package com.example.metricssample.spanner;
 
 import org.springframework.stereotype.Component;
 

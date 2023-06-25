@@ -1,9 +1,8 @@
 
-package com.example.metricssample;
+package com.example.metricssample.spanner;
 
 import com.google.cloud.spanner.*;
 import com.google.cloud.spanner.spi.v1.SpannerRpcViews;
-import io.opencensus.exporter.stats.stackdriver.StackdriverStatsExporter;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -27,8 +26,6 @@ public class SpannerController {
 
     // Register GFELatency and GFE Header Missing Count Views
     SpannerRpcViews.registerGfeLatencyAndHeaderMissingCountViews();
-
-    StackdriverStatsExporter.createAndRegister();
   }
 
   @GetMapping(path = "/", produces = "application/json")
