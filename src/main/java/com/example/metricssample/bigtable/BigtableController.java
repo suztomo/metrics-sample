@@ -100,7 +100,7 @@ public class BigtableController {
         SdkMeterProvider sdkMeterProvider = SdkMeterProvider.builder()
                 .registerMetricReader(PeriodicMetricReader.builder(cloudMonitoringExporter).setInterval(Duration.ofSeconds(20)).build())
                 .setResource(resource)
-                .registerView(instrumentSelector, view)
+//                .registerView(instrumentSelector, view)
                 .build();
 
         OpenTelemetry openTelemetry = OpenTelemetrySdk.builder()
