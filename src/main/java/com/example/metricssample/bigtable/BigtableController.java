@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Duration;
 
+import static com.example.metricssample.bigtable.BigtableOpenTelemetryApiMetricsTracer.BIGTABLE_ATTEMPT_LATENCY;
 import static com.example.metricssample.bigtable.BigtableOpenTelemetryMetricsTracerFactory.METER_NAME;
 
 @RestController
@@ -93,6 +94,17 @@ public class BigtableController {
                 .setDescription("Attempt latency in msecs")
                 .build();
         InstrumentSelector instrumentSelector = InstrumentSelector.builder()
+                .setName(BIGTABLE_ATTEMPT_LATENCY)
+                .setMeterName(METER_NAME)
+                .setType(InstrumentType.HISTOGRAM)
+                .setUnit("ms")
+                .build();
+        View operationLatencyView = View.builder()
+                .setName("cloud.google.com/java/bigtable/operation_latency")
+                .setDescription("Attempt latency in msecs")
+                .build();
+        InstrumentSelector operationLatencyInstrumentSelector = InstrumentSelector.builder()
+                .setName("operation_latency")
                 .setMeterName(METER_NAME)
                 .setType(InstrumentType.HISTOGRAM)
                 .setUnit("ms")
@@ -100,12 +112,12 @@ public class BigtableController {
         SdkMeterProvider sdkMeterProvider = SdkMeterProvider.builder()
                 .registerMetricReader(PeriodicMetricReader.builder(cloudMonitoringExporter).setInterval(Duration.ofSeconds(20)).build())
                 .setResource(resource)
-//                .registerView(instrumentSelector, view)
+                .registerView(instrumentSelector, view)
+                .registerView(operationLatencyInstrumentSelector, operationLatencyView)
                 .build();
 
         OpenTelemetry openTelemetry = OpenTelemetrySdk.builder()
                 .setMeterProvider(sdkMeterProvider)
-                .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
                 .buildAndRegisterGlobal();
 
         return new BigtableOpenTelemetryMetricsTracerFactory(openTelemetry);
