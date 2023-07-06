@@ -14,13 +14,12 @@ import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.opentelemetry.metric.GoogleCloudMetricExporter;
 import com.google.cloud.opentelemetry.metric.MetricConfiguration;
 import com.google.cloud.opentelemetry.metric.MetricDescriptorStrategy;
+import com.google.common.collect.ImmutableList;
 import io.opencensus.contrib.grpc.metrics.RpcViews;
-import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.common.Attributes;
-import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
-import io.opentelemetry.context.propagation.ContextPropagators;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
+import io.opentelemetry.sdk.metrics.Aggregation;
 import io.opentelemetry.sdk.metrics.InstrumentSelector;
 import io.opentelemetry.sdk.metrics.InstrumentType;
 import io.opentelemetry.sdk.metrics.SdkMeterProvider;
@@ -67,7 +66,7 @@ public class BigtableController {
         InstantiatingGrpcChannelProvider transportChannelProvider = InstantiatingGrpcChannelProvider.newBuilder().setChannelPoolSettings(channelPoolSettings).build();
         builder.stubSettings().setTracerFactory(openTelemetryTracerFactory).setTransportChannelProvider(transportChannelProvider);
 
-//        BigtableDataSettings.enableBuiltinMetrics();
+        BigtableDataSettings.enableBuiltinMetrics();
         BigtableDataSettings.enableGfeOpenCensusStats();
         BigtableDataSettings.enableOpenCensusStats();
 
@@ -83,7 +82,13 @@ public class BigtableController {
             writeToTable();
         }
     }
-
+    private static final Aggregation AGGREGATION_WITH_MILLIS_HISTOGRAM =
+            Aggregation.explicitBucketHistogram(
+                    ImmutableList.of(
+                            0.0, 0.01, 0.05, 0.1, 0.3, 0.6, 0.8, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 13.0,
+                            16.0, 20.0, 25.0, 30.0, 40.0, 50.0, 65.0, 80.0, 100.0, 130.0, 160.0, 200.0, 250.0,
+                            300.0, 400.0, 500.0, 650.0, 800.0, 1000.0, 2000.0, 5000.0, 10000.0, 20000.0, 50000.0,
+                            100000.0));
     private static OpenTelemetryTracerFactory createOpenTelemetryTracerFactory() {
         //Default resource is "Generic Task"
         Resource resource = Resource.getDefault()
@@ -93,14 +98,15 @@ public class BigtableController {
                 MetricConfiguration.builder()
                         // Configure the cloud project id.  Note: this is autodiscovered by default.
                         .setProjectId(PROJECT_ID)
-                        .setPrefix("custom.googleapis.com/opentelemetry")
+                        .setPrefix("custom.googleapis.com")
                         // Configure a strategy for how/when to configure metric descriptors.
                         .setDescriptorStrategy(MetricDescriptorStrategy.SEND_ONCE)
                         .build());
 
         View view = View.builder()
-                .setName("cloud.google.com/java/bigtable/attempt_latency")
+                .setName("custom.googleapis.com/opentelemetry/cloud.google.com/java/bigtable/attempt_latency")
                 .setDescription("Attempt latency in msecs")
+                .setAggregation(AGGREGATION_WITH_MILLIS_HISTOGRAM)
                 .build();
         InstrumentSelector instrumentSelector = InstrumentSelector.builder()
                 .setName(BIGTABLE_ATTEMPT_LATENCY)
@@ -109,8 +115,9 @@ public class BigtableController {
                 .setUnit("ms")
                 .build();
         View operationLatencyView = View.builder()
-                .setName("cloud.google.com/java/bigtable/operation_latency")
+                .setName("custom.googleapis.com/opentelemetry/cloud.google.com/java/bigtable/operation_latency")
                 .setDescription("Attempt latency in msecs")
+                .setAggregation(AGGREGATION_WITH_MILLIS_HISTOGRAM)
                 .build();
         InstrumentSelector operationLatencyInstrumentSelector = InstrumentSelector.builder()
                 .setName("operation_latency")
@@ -121,8 +128,8 @@ public class BigtableController {
         SdkMeterProvider sdkMeterProvider = SdkMeterProvider.builder()
                 .registerMetricReader(PeriodicMetricReader.builder(cloudMonitoringExporter).setInterval(Duration.ofSeconds(20)).build())
                 .setResource(resource)
-//                .registerView(instrumentSelector, view)
-//                .registerView(operationLatencyInstrumentSelector, operationLatencyView)
+                .registerView(instrumentSelector, view)
+                .registerView(operationLatencyInstrumentSelector, operationLatencyView)
                 .build();
 
         OpenTelemetry openTelemetry = OpenTelemetrySdk.builder()
