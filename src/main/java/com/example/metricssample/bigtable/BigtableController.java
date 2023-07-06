@@ -1,5 +1,7 @@
 package com.example.metricssample.bigtable;
 
+import com.google.api.gax.grpc.ChannelPoolSettings;
+import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.api.gax.rpc.NotFoundException;
 import com.google.api.gax.tracing.OpenTelemetryTracerFactory;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminClient;
@@ -13,6 +15,7 @@ import com.google.cloud.opentelemetry.metric.GoogleCloudMetricExporter;
 import com.google.cloud.opentelemetry.metric.MetricConfiguration;
 import com.google.cloud.opentelemetry.metric.MetricDescriptorStrategy;
 import io.opencensus.contrib.grpc.metrics.RpcViews;
+import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
@@ -49,13 +52,20 @@ public class BigtableController {
 
     public BigtableController() throws Exception {
         String instanceId = "test-routing-headers";
+        //Register OpenCensus views for gRPC metrics
         RpcViews.registerAllViews();
 
         OpenTelemetryTracerFactory openTelemetryTracerFactory = createOpenTelemetryTracerFactory();
         BigtableDataSettings.Builder builder = BigtableDataSettings.newBuilder()
                 .setProjectId(PROJECT_ID)
                 .setInstanceId(instanceId);
-        builder.stubSettings().setTracerFactory(openTelemetryTracerFactory);
+        ChannelPoolSettings channelPoolSettings = ChannelPoolSettings.builder()
+                .setInitialChannelCount(2)
+                .setMinChannelCount(2)
+                .setMaxChannelCount(10)
+                .build();
+        InstantiatingGrpcChannelProvider transportChannelProvider = InstantiatingGrpcChannelProvider.newBuilder().setChannelPoolSettings(channelPoolSettings).build();
+        builder.stubSettings().setTracerFactory(openTelemetryTracerFactory).setTransportChannelProvider(transportChannelProvider);
 
 //        BigtableDataSettings.enableBuiltinMetrics();
         BigtableDataSettings.enableGfeOpenCensusStats();
@@ -79,7 +89,6 @@ public class BigtableController {
         Resource resource = Resource.getDefault()
                 .merge(Resource.create(Attributes.of(ResourceAttributes.SERVICE_NAME, "bigtable")));
 
-//        MetricExporter cloudMonitoringExporter = GoogleCloudMetricExporter.createWithDefaultConfiguration();
         MetricExporter cloudMonitoringExporter = GoogleCloudMetricExporter.createWithConfiguration(
                 MetricConfiguration.builder()
                         // Configure the cloud project id.  Note: this is autodiscovered by default.
@@ -112,8 +121,8 @@ public class BigtableController {
         SdkMeterProvider sdkMeterProvider = SdkMeterProvider.builder()
                 .registerMetricReader(PeriodicMetricReader.builder(cloudMonitoringExporter).setInterval(Duration.ofSeconds(20)).build())
                 .setResource(resource)
-                .registerView(instrumentSelector, view)
-                .registerView(operationLatencyInstrumentSelector, operationLatencyView)
+//                .registerView(instrumentSelector, view)
+//                .registerView(operationLatencyInstrumentSelector, operationLatencyView)
                 .build();
 
         OpenTelemetry openTelemetry = OpenTelemetrySdk.builder()
