@@ -1,4 +1,8 @@
+# What is this repo?
+This repo is a sample Spring Boot app that demonstrates OpenCensus metrics in Bigtable/Spanner, and OpenTelemetry metrics in Bigtable
+
 # How to run this sample?
+This repo is dependent on SNAPSHOT versions of gax and bigtable, see relevant changes in [gax](https://github.com/googleapis/sdk-platform-java/pull/1807) and [bigtable](https://github.com/googleapis/java-bigtable/pull/1813).
 1. Enable Cloud Monitoring API
 2. Update project/instance/table ids in SpannerController and BigtableController
 2. Start the app
