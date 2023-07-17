@@ -3,7 +3,7 @@ package com.example.metricssample.bigtable;
 import com.google.api.gax.grpc.ChannelPoolSettings;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.api.gax.rpc.NotFoundException;
-import com.google.api.gax.tracing.OpenTelemetryTracerFactory;
+import com.google.api.gax.tracing.OpenTelemetryMetricsFactory;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminClient;
 import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Duration;
 
 import static com.example.metricssample.bigtable.BigtableOpenTelemetryApiMetricsTracer.BIGTABLE_ATTEMPT_LATENCY;
-import static com.example.metricssample.bigtable.BigtableOpenTelemetryMetricsTracerFactory.METER_NAME;
+import static com.example.metricssample.bigtable.BigtableOpenTelemetryMetricsFactory.METER_NAME;
 
 @RestController
 @RequestMapping(path = "/bigtable")
@@ -49,12 +49,15 @@ public class BigtableController {
     private static final String COLUMN_QUALIFIER_NAME = "name";
     private static final String ROW_KEY_PREFIX = "rowKey";
 
-    public BigtableController() throws Exception {
+    private OpenTelemetry openTelemetry;
+
+    public BigtableController(OpenTelemetry openTelemetry) throws Exception {
+        this.openTelemetry = openTelemetry;
         String instanceId = "test-routing-headers";
         //Register OpenCensus views for gRPC metrics
         RpcViews.registerAllViews();
 
-        OpenTelemetryTracerFactory openTelemetryTracerFactory = createOpenTelemetryTracerFactory();
+        OpenTelemetryMetricsFactory openTelemetryTracerFactory = createOpenTelemetryTracerFactory();
         BigtableDataSettings.Builder builder = BigtableDataSettings.newBuilder()
                 .setProjectId(PROJECT_ID)
                 .setInstanceId(instanceId);
@@ -89,7 +92,7 @@ public class BigtableController {
                             16.0, 20.0, 25.0, 30.0, 40.0, 50.0, 65.0, 80.0, 100.0, 130.0, 160.0, 200.0, 250.0,
                             300.0, 400.0, 500.0, 650.0, 800.0, 1000.0, 2000.0, 5000.0, 10000.0, 20000.0, 50000.0,
                             100000.0));
-    private static OpenTelemetryTracerFactory createOpenTelemetryTracerFactory() {
+    private OpenTelemetryMetricsFactory createOpenTelemetryTracerFactory() {
         //Default resource is "Generic Task"
         Resource resource = Resource.getDefault()
                 .merge(Resource.create(Attributes.of(ResourceAttributes.SERVICE_NAME, "bigtable")));
@@ -134,9 +137,9 @@ public class BigtableController {
 
         OpenTelemetry openTelemetry = OpenTelemetrySdk.builder()
                 .setMeterProvider(sdkMeterProvider)
-                .buildAndRegisterGlobal();
+                .build();
 
-        return new BigtableOpenTelemetryMetricsTracerFactory(openTelemetry);
+        return new BigtableOpenTelemetryMetricsFactory(this.openTelemetry);
     }
 
     @GetMapping(path = "/", produces = "application/json")

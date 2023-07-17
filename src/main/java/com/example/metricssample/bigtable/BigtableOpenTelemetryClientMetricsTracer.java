@@ -10,6 +10,6 @@ public class BigtableOpenTelemetryClientMetricsTracer extends OpenTelemetryClien
 
     @Override
     public String channelSizeName() {
-        return "cloud.google.com_java_bigtable_" + super.channelSizeName();
+        return "cloud.google.com.java.bigtable." + super.channelSizeName();
     }
 }
