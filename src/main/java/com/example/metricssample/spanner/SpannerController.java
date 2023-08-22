@@ -2,26 +2,12 @@
 package com.example.metricssample.spanner;
 
 import com.google.api.gax.tracing.OpenTelemetryMetricsFactory;
-import com.google.cloud.opentelemetry.metric.GoogleCloudMetricExporter;
-import com.google.cloud.opentelemetry.metric.MetricConfiguration;
-import com.google.cloud.opentelemetry.metric.MetricDescriptorStrategy;
 import com.google.cloud.spanner.*;
 import com.google.cloud.spanner.spi.v1.SpannerRpcViews;
-import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.OpenTelemetry;
-import io.opentelemetry.api.common.Attributes;
-import io.opentelemetry.sdk.OpenTelemetrySdk;
-import io.opentelemetry.sdk.metrics.SdkMeterProvider;
-import io.opentelemetry.sdk.metrics.export.MetricExporter;
-import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader;
-import io.opentelemetry.sdk.resources.Resource;
-import io.opentelemetry.semconv.resource.attributes.ResourceAttributes;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Duration;
 import java.util.*;
-
-import static com.example.metricssample.bigtable.BigtableController.PROJECT_ID;
 
 @RestController
 @RequestMapping(path = "/spanner")

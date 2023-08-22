@@ -1,5 +1,6 @@
 package com.example.metricssample.bigtable;
 
+import com.example.metricssample.common.ProjectConfigs;
 import com.google.api.gax.grpc.ChannelPoolSettings;
 import com.google.api.gax.grpc.InstantiatingGrpcChannelProvider;
 import com.google.api.gax.rpc.NotFoundException;
@@ -9,6 +10,7 @@ import com.google.cloud.bigtable.admin.v2.BigtableTableAdminSettings;
 import com.google.cloud.bigtable.admin.v2.models.CreateTableRequest;
 import com.google.cloud.bigtable.data.v2.BigtableDataClient;
 import com.google.cloud.bigtable.data.v2.BigtableDataSettings;
+import com.google.cloud.bigtable.data.v2.models.Query;
 import com.google.cloud.bigtable.data.v2.models.Row;
 import com.google.cloud.bigtable.data.v2.models.RowMutation;
 import com.google.cloud.opentelemetry.metric.GoogleCloudMetricExporter;
@@ -28,6 +30,7 @@ import io.opentelemetry.sdk.metrics.export.MetricExporter;
 import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader;
 import io.opentelemetry.sdk.resources.Resource;
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,7 +43,6 @@ import static com.example.metricssample.bigtable.BigtableOpenTelemetryMetricsFac
 @RestController
 @RequestMapping(path = "/bigtable")
 public class BigtableController {
-    public static final String PROJECT_ID = "blakes-playground-341721";
     private BigtableDataClient dataClient;
     private BigtableTableAdminClient adminClient;
     private static final String tableId = "test-metrics-table";
@@ -50,16 +52,18 @@ public class BigtableController {
     private static final String ROW_KEY_PREFIX = "rowKey";
 
     private OpenTelemetry openTelemetry;
+    private ProjectConfigs projectConfigs;
 
-    public BigtableController(OpenTelemetry openTelemetry) throws Exception {
+    public BigtableController(OpenTelemetry openTelemetry, ProjectConfigs projectConfigs) throws Exception {
         this.openTelemetry = openTelemetry;
+        this.projectConfigs = projectConfigs;
         String instanceId = "test-routing-headers";
         //Register OpenCensus views for gRPC metrics
         RpcViews.registerAllViews();
 
         OpenTelemetryMetricsFactory openTelemetryTracerFactory = createOpenTelemetryTracerFactory();
         BigtableDataSettings.Builder builder = BigtableDataSettings.newBuilder()
-                .setProjectId(PROJECT_ID)
+                .setProjectId(projectConfigs.getProjectId())
                 .setInstanceId(instanceId);
         ChannelPoolSettings channelPoolSettings = ChannelPoolSettings.builder()
                 .setInitialChannelCount(2)
@@ -76,7 +80,7 @@ public class BigtableController {
         dataClient = BigtableDataClient.create(builder.build());
         BigtableTableAdminSettings adminSettings =
                 BigtableTableAdminSettings.newBuilder()
-                        .setProjectId(PROJECT_ID)
+                        .setProjectId(projectConfigs.getProjectId())
                         .setInstanceId(instanceId)
                         .build();
         adminClient = BigtableTableAdminClient.create(adminSettings);
@@ -100,7 +104,7 @@ public class BigtableController {
         MetricExporter cloudMonitoringExporter = GoogleCloudMetricExporter.createWithConfiguration(
                 MetricConfiguration.builder()
                         // Configure the cloud project id.  Note: this is autodiscovered by default.
-                        .setProjectId(PROJECT_ID)
+                        .setProjectId(projectConfigs.getProjectId())
                         .setPrefix("custom.googleapis.com")
                         // Configure a strategy for how/when to configure metric descriptors.
                         .setDescriptorStrategy(MetricDescriptorStrategy.SEND_ONCE)
@@ -147,6 +151,13 @@ public class BigtableController {
         Row row = dataClient.readRow(tableId, "rowKey0");
         System.out.println("Received row: " + row.toString());
         return row.toString();
+    }
+
+    @GetMapping(path = "/rows", produces = "application/json")
+    public String getRows() throws Exception {
+        Iterable<Row> rows = dataClient.readRows(Query.create(tableId).limit(10));
+        rows.forEach(row -> System.out.println("Received row: " + row.toString()));
+        return rows.toString();
     }
 
     public void writeToTable() {
