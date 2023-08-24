@@ -2,7 +2,6 @@ package com.example.metricssample.translate;
 
 import com.google.api.gax.tracing.OpenTelemetryMetricsTracer;
 import com.google.api.gax.tracing.SpanName;
-import com.google.cloud.bigtable.data.v2.models.Row;
 import io.opentelemetry.api.metrics.Meter;
 
 public class TranslateOpenTelemetryMetricsTracer extends OpenTelemetryMetricsTracer {
