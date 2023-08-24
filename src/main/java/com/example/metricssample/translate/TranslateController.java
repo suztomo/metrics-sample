@@ -18,10 +18,10 @@ import java.util.List;
 @RestController
 @RequestMapping(path = "/translate")
 public class TranslateController {
-  private TranslationServiceClient translationServiceClient;
+  private final TranslationServiceClient translationServiceClient;
   private final OpenTelemetry openTelemetry;
 
-  private ProjectConfigs projectConfigs;
+  private final ProjectConfigs projectConfigs;
 
   TranslateController(OpenTelemetry openTelemetry, ProjectConfigs projectConfigs) throws Exception{
     this.openTelemetry = openTelemetry;

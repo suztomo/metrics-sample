@@ -10,7 +10,6 @@ import io.opentelemetry.sdk.metrics.SdkMeterProvider;
 import io.opentelemetry.sdk.metrics.export.MetricExporter;
 import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader;
 import io.opentelemetry.sdk.resources.Resource;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -18,7 +17,7 @@ import java.time.Duration;
 @Configuration
 public class OpenTelemetryConfigs {
 
-    private ProjectConfigs projectConfigs;
+    private final ProjectConfigs projectConfigs;
     public OpenTelemetryConfigs(ProjectConfigs projectConfigs) {
         this.projectConfigs  = projectConfigs;
     }

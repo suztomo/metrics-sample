@@ -15,14 +15,13 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 @RestController
 @RequestMapping(path = "/firestore")
 public class FirestoreController {
 
     private final Firestore db;
-    private OpenTelemetry openTelemetry;
-    private ProjectConfigs projectConfigs;
+    private final OpenTelemetry openTelemetry;
+    private final ProjectConfigs projectConfigs;
     public FirestoreController(OpenTelemetry openTelemetry, ProjectConfigs projectConfigs) {
         this.openTelemetry = openTelemetry;
         this.projectConfigs = projectConfigs;
