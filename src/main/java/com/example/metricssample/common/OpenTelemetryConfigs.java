@@ -36,7 +36,7 @@ public class OpenTelemetryConfigs {
                         .setDescriptorStrategy(MetricDescriptorStrategy.SEND_ONCE)
                         .build());
         PrometheusHttpServer prometheusReader = PrometheusHttpServer.builder().setPort(9090).build();
-        PeriodicMetricReader metricReader = PeriodicMetricReader.builder(metricExporter).setInterval(Duration.ofSeconds(20)).build();
+        PeriodicMetricReader metricReader = PeriodicMetricReader.builder(metricExporter).setInterval(Duration.ofSeconds(10)).build();
 
         SdkMeterProvider sdkMeterProvider = SdkMeterProvider.builder()
                 .registerMetricReader(prometheusReader)
