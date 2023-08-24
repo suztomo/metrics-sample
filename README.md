@@ -7,5 +7,5 @@ This repo is dependent on the branch `otel-poc` of gax. see relevant changes in 
 2. Go to the root folder of `sdk-platform-java`, switch to branch `otel-poc`, run `mvn clean install -DskipTests -Dcheckstyle.skip -Dclirr.skip`. 
 3. Start the app
 4. Navigate to http://localhost:8080/translate/hello for a few requests
-5. Wait up to 1 minute, the metrics should show up in Cloud Monitoring dashboard on Metrics explorer tab. The relevant metrics are under Generic Task -> Custom metrics -> attempt_latency
+5. Wait up to 1 minute, the metrics should show up in [Cloud Monitoring dashboard on Metrics explorer tab](https://pantheon.corp.google.com/monitoring/metrics-explorer). The relevant metrics are under Generic Task -> Custom metrics -> attempt_latency
 6. Alternatively, navigate to http://localhost:9090 to see the latest metrics without waiting.
