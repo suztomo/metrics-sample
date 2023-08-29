@@ -70,6 +70,7 @@
         <dependency>
             <groupId>com.google.api</groupId>
             <artifactId>gax</artifactId>
+            <!-- This SNAPSHOT version is local installation -->
             <version>2.32.1-SNAPSHOT</version>
         </dependency>
         <dependency>

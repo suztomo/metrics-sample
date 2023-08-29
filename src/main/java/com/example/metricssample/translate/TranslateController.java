@@ -2,7 +2,6 @@
 package com.example.metricssample.translate;
 
 import com.example.metricssample.common.ProjectConfigs;
-import com.google.api.gax.tracing.OpenTelemetryMetricsFactory;
 import com.google.cloud.translate.v3.LocationName;
 import com.google.cloud.translate.v3.TranslateTextResponse;
 import com.google.cloud.translate.v3.TranslationServiceClient;
@@ -19,21 +18,14 @@ import java.util.List;
 @RequestMapping(path = "/translate")
 public class TranslateController {
   private final TranslationServiceClient translationServiceClient;
-  private final OpenTelemetry openTelemetry;
 
   private final ProjectConfigs projectConfigs;
 
-  TranslateController(OpenTelemetry openTelemetry, ProjectConfigs projectConfigs) throws Exception{
-    this.openTelemetry = openTelemetry;
+  TranslateController(ProjectConfigs projectConfigs) throws Exception{
     this.projectConfigs = projectConfigs;
     TranslationServiceStubSettings stubSettings = TranslationServiceStubSettings.newBuilder()
-            .setTracerFactory(createOpenTelemetryTracerFactory())
             .build();
     translationServiceClient = TranslationServiceClient.create(stubSettings.createStub());
-  }
-
-  private OpenTelemetryMetricsFactory createOpenTelemetryTracerFactory() {
-    return new OpenTelemetryMetricsFactory(openTelemetry, "java-translate", "2.23.0");
   }
 
   @GetMapping(path = "/{text}", produces = "application/json")
